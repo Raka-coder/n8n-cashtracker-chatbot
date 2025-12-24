@@ -1,0 +1,321 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "78c7fc80-06ce-4036-9179-b8d998c0e099",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        704
+      ],
+      "webhookId": "25417cff-7b1d-4282-ad25-75e9f87bd37b",
+      "alwaysOutputData": false,
+      "credentials": {
+        "telegramApi": {
+          "id": "e6LVUOEMQGHrmUJE",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.message.text }}",
+        "rules": {
+          "rules": [
+            {
+              "operation": "startsWith",
+              "value2": "/input"
+            },
+            {
+              "operation": "startsWith",
+              "value2": "/laporan",
+              "output": 1
+            },
+            {
+              "operation": "startsWith",
+              "value2": "/start",
+              "output": 2
+            }
+          ]
+        }
+      },
+      "id": "a982a890-b8fb-4cae-834f-88842743d04c",
+      "name": "Cek Command",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        64,
+        672
+      ],
+      "notes": "Routing: 0=Input, 1=Laporan, 2=Start"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Hapus '/input ' dan pisahkan teks\nconst text = $json.message.text.replace('/input ', '');\nconst parts = text.split(' ');\n\nreturn {\n  tanggal: new Date().toLocaleString('id-ID'),\n  jenis: parts[0],\n  nominal: parseInt(parts[1]),\n  keterangan: parts.slice(2).join(' '),\n  user: $json.message.from.first_name\n};"
+      },
+      "id": "0d633631-83a8-461f-9091-4375b3e244ca",
+      "name": "Olah Data Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1IXdlQJMglcXVsQ0D6cw3qjy9tCSCZbYaNJD1jq_QTAc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "defineAcrossColumns",
+          "value": {
+            "tanggal": "={{ $json.tanggal }}",
+            "jenis": "={{ $json.jenis }}",
+            "nominal": "={{ $json.nominal }}",
+            "keterangan": "={{ $json.keterangan }}",
+            "user": "={{ $json.user }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "4b1a5f2f-ff8f-4cb2-99b4-73bac9dd1f7b",
+      "name": "Simpan ke Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        528,
+        464
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Z443mBrkimCykITB",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=✅ *Transaksi Berhasil!*\n\n📅 {{ $json.tanggal }}\n📂 {{ $json.jenis }}\n💰 Rp {{ $json.nominal.toLocaleString('id-ID') }}\n📝 {{ $json.keterangan }}",
+        "additionalFields": {}
+      },
+      "id": "019cb6a0-b16d-48c7-882f-e109898ba058",
+      "name": "Balas Input",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        752,
+        464
+      ],
+      "webhookId": "206da91d-e0de-4e4e-bfc1-42e2ae38eb5d",
+      "credentials": {
+        "telegramApi": {
+          "id": "AidaG4aTjG24eL3w",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1IXdlQJMglcXVsQ0D6cw3qjy9tCSCZbYaNJD1jq_QTAc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1IXdlQJMglcXVsQ0D6cw3qjy9tCSCZbYaNJD1jq_QTAc/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "7f196184-da58-4957-828d-3eadd42805c7",
+      "name": "Baca Semua Data",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        304,
+        688
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Z443mBrkimCykITB",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let totalMasuk = 0;\nlet totalKeluar = 0;\nlet jumlahTransaksi = 0;\n\nfor (const item of items) {\n  const jenis = item.json.jenis ? item.json.jenis.toLowerCase() : '';\n  const nominal = parseInt(item.json.nominal) || 0;\n\n  if (jenis.includes('masuk') || jenis.includes('pemasukan')) {\n    totalMasuk += nominal;\n  } else {\n    totalKeluar += nominal;\n  }\n  jumlahTransaksi++;\n}\n\nreturn {\n  totalMasuk,\n  totalKeluar,\n  saldo: totalMasuk - totalKeluar,\n  jumlahTransaksi\n};"
+      },
+      "id": "02e90969-c386-4773-9374-d8f2c61d6285",
+      "name": "Hitung Laporan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        688
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=📊 *LAPORAN KEUANGAN*\n\nTotal Transaksi: {{ $json.jumlahTransaksi }} item\n\n📈 Pemasukan: Rp {{ $json.totalMasuk.toLocaleString('id-ID') }}\n📉 Pengeluaran: Rp {{ $json.totalKeluar.toLocaleString('id-ID') }}\n\n💰 *Saldo Akhir: Rp {{ $json.saldo.toLocaleString('id-ID') }}*",
+        "additionalFields": {}
+      },
+      "id": "9f4d0941-52fa-4406-986e-80da79524585",
+      "name": "Kirim Laporan",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        752,
+        688
+      ],
+      "webhookId": "f787d759-5b2c-4638-b46a-69fe3ffa17b1",
+      "credentials": {
+        "telegramApi": {
+          "id": "AidaG4aTjG24eL3w",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.message.chat.id }}",
+        "text": "👋 *Halo! Selamat Datang di Bot Keuangan.*\n\nSilakan gunakan format berikut:\n\n1️⃣ *Input Transaksi:*\n`/input [Jenis] [Nominal] [Keterangan]`\nContoh: `/input Masuk 500000 Gaji`\nContoh: `/input Keluar 15000 Makan`\n\n2️⃣ *Cek Laporan:*\nKetik `/laporan` untuk melihat ringkasan saldo.\n\nSelamat mencatat! 🚀",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "663882d5-1d10-407a-95aa-0e50d6b7d3ed",
+      "name": "Pesan Sambutan",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        304,
+        896
+      ],
+      "webhookId": "fb844d48-520b-4bf4-b062-f36eb2cad61f",
+      "credentials": {
+        "telegramApi": {
+          "id": "AidaG4aTjG24eL3w",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Cek Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cek Command": {
+      "main": [
+        [
+          {
+            "node": "Olah Data Input",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Baca Semua Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pesan Sambutan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Olah Data Input": {
+      "main": [
+        [
+          {
+            "node": "Simpan ke Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simpan ke Sheet": {
+      "main": [
+        [
+          {
+            "node": "Balas Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baca Semua Data": {
+      "main": [
+        [
+          {
+            "node": "Hitung Laporan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hitung Laporan": {
+      "main": [
+        [
+          {
+            "node": "Kirim Laporan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b6718c5f-0af2-459e-8b10-ce94501e1871",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3706cd37e4a5846abce7f35dce471ffafdebf5e4c6505c0f588c0bb6250df8f5"
+  },
+  "id": "5nwKjN2UsGQZ71ts",
+  "tags": []
+}
