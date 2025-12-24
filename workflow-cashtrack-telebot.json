@@ -179,7 +179,7 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "chatId": "={{ $('Telegram Trigger').first().json.message.chat.id }}",
         "text": "=📊 *LAPORAN KEUANGAN*\n\nTotal Transaksi: {{ $json.jumlahTransaksi }} item\n\n📈 Pemasukan: Rp {{ $json.totalMasuk.toLocaleString('id-ID') }}\n📉 Pengeluaran: Rp {{ $json.totalKeluar.toLocaleString('id-ID') }}\n\n💰 *Saldo Akhir: Rp {{ $json.saldo.toLocaleString('id-ID') }}*",
         "additionalFields": {}
       },
@@ -194,8 +194,8 @@
       "webhookId": "f787d759-5b2c-4638-b46a-69fe3ffa17b1",
       "credentials": {
         "telegramApi": {
-          "id": "AidaG4aTjG24eL3w",
-          "name": "Telegram account"
+          "id": "e6LVUOEMQGHrmUJE",
+          "name": "Telegram account 2"
         }
       }
     },
@@ -311,7 +311,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "b6718c5f-0af2-459e-8b10-ce94501e1871",
+  "versionId": "9a5f38ab-64f7-4a51-b3d6-83a6d4213ff3",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "3706cd37e4a5846abce7f35dce471ffafdebf5e4c6505c0f588c0bb6250df8f5"
